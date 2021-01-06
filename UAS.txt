@@ -1,0 +1,127 @@
+#KANTOR PUSAT (MCU)
+from http import *
+from time import *
+from ioeclient import *
+
+data1 = ""
+data2 = ""
+def setup():
+	IoEClient.setup({
+		"type" : "MicroController",
+		"states": [
+		{
+			"name": "Kantor Cabang 1 ada orang ?",
+			"type": "bool",
+		},
+		{
+			"name": "Kantor Cabang 2 ada api ?",
+			"type": "bool",
+		}]
+		
+	})
+
+	global data1
+	global data2
+	
+	
+	
+	
+def onHTTPDone1(status, data):
+	global data1
+	global data2
+	print("Status Cabang 1 : " + data)
+	if (data=="TIDAK ADA ORANG"):
+		data1 = 0
+	else:
+		data1 = 1
+	
+def onHTTPDone2(status, data):
+	global data1
+	global data2
+	print("Status Cabang 2 : " + data)
+	if (data=="TIDAK ADA API"):
+		data2 = 0
+	else:
+		data2 = 1
+
+def main():
+	setup()
+	http1 = HTTPClient()
+	http2 = HTTPClient()
+	global data1
+	global data2
+	while True:
+		sleep(2)
+		http1.onDone(onHTTPDone1)
+		http1.open("http://cabang1.kantor.com")
+		http2.onDone(onHTTPDone2)
+		http2.open("http://cabang2.kantor.com")
+		report = str(data1)+","+str(data2)
+		IoEClient.reportStates(report)
+	
+
+	# don't let it finish
+	
+if __name__ == "__main__":
+	main()
+
+
+
+
+#KANTOR CABANG 1 (SBC)
+from http import *
+from gpio import *
+from time import *
+
+def onRouteRoot(url, response):
+	print("Request for /");
+	value = digitalRead(0)
+	if value == 0:
+		customWrite(1, '0')
+		response.send("TIDAK ADA ORANG")
+	else:
+		customWrite(1, '1')
+		response.send("ADA ORANG, WEBCAM MENYALA")
+	
+def main():
+	HTTPServer.route("/", onRouteRoot)
+
+	# start server on port 80
+	print(HTTPServer.start(80))
+
+	# don't let it finish
+	while True:
+		sleep(2)
+
+if __name__ == "__main__":
+	main()
+
+
+
+#KANTOR CABANG 2 (SBC)
+from http import *
+from gpio import *
+from time import *
+
+def onRouteRoot(url, response):
+	print("Request for /");
+	value = digitalRead(0)
+	if value == 0:
+		customWrite(1, '0')
+		response.send("TIDAK ADA ORANG")
+	else:
+		customWrite(1, '1')
+		response.send("ADA ORANG, WEBCAM MENYALA")
+	
+def main():
+	HTTPServer.route("/", onRouteRoot)
+
+	# start server on port 80
+	print(HTTPServer.start(80))
+
+	# don't let it finish
+	while True:
+		sleep(2)
+
+if __name__ == "__main__":
+	main()
